@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.wcs import WCS
 
 COORD_TYPE = {}
 COORD_TYPE['Right Ascension'] = "RA--"
@@ -10,8 +9,10 @@ COORD_TYPE['Stokes'] = "STOKES"
 
 def wcs_casa2astropy(casa_wcs):
     """
-    Convert a CASA coordsys object into an astropy.wcs.WCS object
+    Convert a casac.coordsys object into an astropy.wcs.WCS object
     """
+
+    from astropy.wcs import WCS
 
     wcs = WCS(naxis=int(casa_wcs.naxes()))
 
@@ -56,3 +57,17 @@ def wcs_casa2astropy(casa_wcs):
     wcs.wcs.ctype = ctype
 
     return wcs
+
+def nddata_casa2astropy(data_object):
+    """
+    Convert a casac.image object to an astropy.nddata.NDData object:
+    """
+
+    from astropy.nddata import NDData
+
+    record = data_object.torecord()
+
+    data = record['imagearray']
+    wcs = wcs_casa2astropy(data_object.coordsys())
+
+    return NDData(data, wcs=wcs, copy=False)
