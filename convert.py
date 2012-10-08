@@ -15,14 +15,35 @@ def wcs_casa2astropy(casa_wcs):
 
     wcs = WCS(naxis=int(casa_wcs.naxes()))
 
-    wcs.wcs.crpix = casa_wcs.referencepixel()['numeric']
-    wcs.wcs.cdelt = casa_wcs.increment()['numeric']
-    wcs.wcs.crval = casa_wcs.referencevalue()['numeric']
+    crpix = casa_wcs.referencepixel()
+    if crpix['ar_type'] != 'absolute':
+        raise ValueError("Unexpected ar_type: %s" % crpix['ar_type'])
+    elif crpix['pw_type'] != 'pixel':
+        raise ValueError("Unexpected pw_type: %s" % crpix['pw_type'])
+    else:
+        wcs.wcs.crpix = crpix['numeric']
+
+    cdelt = casa_wcs.increment()
+    if cdelt['ar_type'] != 'absolute':
+        raise ValueError("Unexpected ar_type: %s" % cdelt['ar_type'])
+    elif cdelt['pw_type'] != 'world':
+        raise ValueError("Unexpected pw_type: %s" % cdelt['pw_type'])
+    else:
+        wcs.wcs.cdelt = cdelt['numeric']
+
+    crval = casa_wcs.referencevalue()
+    if crval['ar_type'] != 'absolute':
+        raise ValueError("Unexpected ar_type: %s" % crval['ar_type'])
+    elif crval['pw_type'] != 'world':
+        raise ValueError("Unexpected pw_type: %s" % crval['pw_type'])
+    else:
+        wcs.wcs.crval = crval['numeric']
+
     wcs.wcs.cunit = casa_wcs.units()
 
     # There is no easy way at the moment to extract the orginal projection
     # codes from a coordsys object, so we need to figure out how to do this in
-    # the most general way.
+    # the most general way. The code below is still experimental.
     ctype = []
     for i, name in enumerate(casa_wcs.names()):
         if name in COORD_TYPE:
